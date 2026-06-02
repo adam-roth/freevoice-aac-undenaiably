@@ -13,7 +13,7 @@ import { unlockIOSSpeech } from '../utils/voiceDetection';
 
 // Singleton worker — one instance for the app lifetime
 let worker: Worker | null = null;
-const pendingCallbacks = new Map<string, (buffer: ArrayBuffer) => void>();
+const pendingCallbacks = new Map<string, (pcm: ArrayBuffer, sampleRate: number) => void>();
 let callbackIdCounter = 0;
 // Tracks the latest in-flight Kokoro request so older worker responses (which
 // may carry the previous rate/voice because the worker generates serially)
@@ -57,7 +57,7 @@ function getWorker(): Worker {
       if (msg.type === 'AUDIO_READY') {
         const cb = pendingCallbacks.get(msg.id);
         if (cb) {
-          cb(msg.buffer);
+          cb(msg.pcm, msg.sampleRate);
           pendingCallbacks.delete(msg.id);
         }
       }
@@ -232,7 +232,14 @@ function isSamsungOldAndroid(): boolean {
 
 function getAudioContext(): AudioContext {
   if (!sharedAudioCtx || sharedAudioCtx.state === 'closed') {
-    sharedAudioCtx = new AudioContext();
+    // Match Kokoro's 24kHz output so no resample happens (belt-and-suspenders
+    // alongside the raw-PCM playback below). Falls back to the device default
+    // if a fixed rate is rejected.
+    try {
+      sharedAudioCtx = new AudioContext({ sampleRate: 24000 });
+    } catch {
+      sharedAudioCtx = new AudioContext();
+    }
     audioCtxWarmed = false;
   }
   return sharedAudioCtx;
@@ -260,8 +267,9 @@ async function warmAudioContext(ctx: AudioContext): Promise<void> {
   audioCtxWarmed = true;
 }
 
-async function playArrayBuffer(
-  buffer: ArrayBuffer,
+async function playPcm(
+  pcm: ArrayBuffer,
+  sampleRate: number,
   volume: number,
   pitch: number,
   isStillActive?: () => boolean,
@@ -277,17 +285,26 @@ async function playArrayBuffer(
   if (currentAudioSource) {
     try {
       currentAudioSource.stop(0);
-    } catch (e) {
+    } catch {
       // Source may already be stopped, ignore
     }
   }
 
-  const audioBuffer = await audioCtx.decodeAudioData(buffer.slice(0));
-  // Re-check after the async decode: cancel() may have been called while we
-  // were decoding. Without this, the stale buffer would still start playing
-  // right after cancel — the overlapping-voices race that triggers on rapid
-  // preview taps.
+  // Re-check after the async warm step: cancel() may have been called while we
+  // were warming. Without this, the stale buffer would still start playing
+  // right after cancel — the overlapping-voices race on rapid preview taps.
   if (isStillActive && !isStillActive()) return;
+
+  // Build the buffer at Kokoro's NATIVE rate and copy the raw samples in, so
+  // decodeAudioData never runs. That decode-time 24->48kHz resample was what
+  // muffled desktop audio. createBuffer pins 24kHz even if the AudioContext
+  // fell back to 48kHz; Web Audio then does one output-stage resample, the same
+  // path phones already use.
+  const rate = sampleRate || 24000;
+  const samples = new Float32Array(pcm);
+  const audioBuffer = audioCtx.createBuffer(1, samples.length, rate);
+  audioBuffer.copyToChannel(samples, 0);
+
   const source = audioCtx.createBufferSource();
   const gainNode = audioCtx.createGain();
   gainNode.gain.value = volume;
@@ -499,7 +516,7 @@ export function useTTS() {
         const id = String(++callbackIdCounter);
         latestKokoroRequestId = id;
 
-        pendingCallbacks.set(id, async (buffer: ArrayBuffer) => {
+        pendingCallbacks.set(id, async (pcm: ArrayBuffer, sampleRate: number) => {
           // Drop stale audio: if a newer speak() (or cancel) has happened
           // since this request was issued, the worker is just now returning
           // the OLD rate/voice. Playing it would overwrite the user's new
@@ -509,7 +526,7 @@ export function useTTS() {
             return;
           }
           try {
-            await playArrayBuffer(buffer, volume, pitch, () => latestKokoroRequestId === id);
+            await playPcm(pcm, sampleRate, volume, pitch, () => latestKokoroRequestId === id);
           } catch (err) {
             // Decode/playback failed. Don't silently fall through to Web
             // Speech — that's the jarring "robotic voice" the user hears.

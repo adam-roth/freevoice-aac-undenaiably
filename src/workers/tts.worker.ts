@@ -285,6 +285,16 @@ const PRECACHE_LIST = [
   'one', 'two', 'three', 'four', 'five',
 ];
 
+// Kokoro's native output rate. We post raw Float32 PCM (not a WAV) so the main
+// thread can build the AudioBuffer at this rate and skip decodeAudioData, which
+// was resampling 24->48kHz and muffling desktop audio.
+const SAMPLE_RATE = 24000;
+type RawAudioLike = { audio: Float32Array };
+/** Standalone, transferable ArrayBuffer copy of the raw PCM. */
+function toPcmBuffer(a: RawAudioLike): ArrayBuffer {
+  return new Float32Array(a.audio).buffer;
+}
+
 let precachePaused = false;
 // Tracks the latest SPEAK batch the main thread has sent. SPEAK_AND_CACHE
 // messages tagged with an older batch are skipped — rapid user taps would
@@ -301,8 +311,7 @@ async function preCacheCommonWords(voice: string, speed: number): Promise<void> 
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const audio = await tts!.generate(word, { voice: voice as any, speed });
-      const wav = audio.toWav();
-      audioCache.set(key, wav);
+      audioCache.set(key, toPcmBuffer(audio as unknown as RawAudioLike));
     } catch {
       // Non-fatal
     }
@@ -392,18 +401,18 @@ ctx.onmessage = async (e: MessageEvent) => {
       }
       const ck = cacheKey(msg.voice, msg.speed, msg.text);
       try {
-        let wav: ArrayBuffer;
+        let pcm: ArrayBuffer;
         if (audioCache.has(ck)) {
-          wav = audioCache.get(ck)!.slice(0);
+          pcm = audioCache.get(ck)!.slice(0);
         } else {
           const audio = await tts.generate(msg.text, {
             voice: msg.voice,
             speed: msg.speed,
           });
-          wav = audio.toWav();
-          audioCache.set(ck, wav.slice(0));
+          pcm = toPcmBuffer(audio as unknown as RawAudioLike);
+          audioCache.set(ck, pcm.slice(0));
         }
-        post({ type: 'AUDIO_READY', id: msg.id, buffer: wav }, [wav]);
+        post({ type: 'AUDIO_READY', id: msg.id, pcm, sampleRate: SAMPLE_RATE }, [pcm]);
       } catch (err) {
         post({ type: 'SPEAK_ERROR', id: msg.id, error: String(err) });
       }
@@ -419,8 +428,7 @@ ctx.onmessage = async (e: MessageEvent) => {
       if (audioCache.has(ck)) return;
       try {
         const audio = await tts.generate(msg.text, { voice: msg.voice, speed: msg.speed });
-        const wav = audio.toWav();
-        audioCache.set(ck, wav);
+        audioCache.set(ck, toPcmBuffer(audio as unknown as RawAudioLike));
       } catch {
         // Non-fatal
       }
