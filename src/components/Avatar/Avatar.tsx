@@ -446,7 +446,7 @@ export function Avatar({ characterId, size = 80, className, style, 'aria-label':
 
   return (
     <img
-      src={`${BASE}characters/preview/${characterId}.png`}
+      src={`${BASE}characters/preview/${characterId}.webp`}
       width={size}
       height={size}
       alt={ariaLabel ?? ''}
