@@ -22,10 +22,30 @@ export default defineConfig({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        globIgnores: ['**/tts.worker-*.js', '**/kokoroWorker-*.js', '**/*.wasm', '**/*.onnx'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2}'],
+        // Do NOT precache the character art (~148MB of emotion PNGs + sprite
+        // sheets). Precaching forced every device to download all of it on
+        // first load. It's now fetched on demand and kept via the CacheFirst
+        // runtime rule below.
+        globIgnores: [
+          '**/tts.worker-*.js',
+          '**/kokoroWorker-*.js',
+          '**/*.wasm',
+          '**/*.onnx',
+          '**/characters/**',
+        ],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         runtimeCaching: [
+          {
+            // Character art: downloaded only when shown, then cached for offline.
+            urlPattern: /\/characters\/.*\.(?:png|webp|jpe?g)$/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'character-art',
+              expiration: { maxEntries: 800, maxAgeSeconds: 60 * 60 * 24 * 90 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
             handler: 'StaleWhileRevalidate',
