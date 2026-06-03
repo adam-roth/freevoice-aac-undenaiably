@@ -258,6 +258,15 @@ export function SymbolCard({ symbol, onTap, isParentMode, showEditOverlay }: Pro
     onTap(symbol);
   }, [symbol, onTap, touchDelay]);
 
+  // A11Y: keyboard (Enter/Space), switch-access, and screen-reader activation
+  // all dispatch a click. Pointer-driven clicks have detail > 0 and are already
+  // handled by the pointer events above, so only act on detail === 0 to avoid
+  // double-speaking. This makes the core action operable without a touchscreen.
+  const handleClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    if (e.detail !== 0) return;
+    onTap(symbol);
+  }, [symbol, onTap]);
+
   if (symbol.hidden && !isParentMode) return null;
 
   const labelEl = labelPosition !== 'hidden' && (
@@ -273,11 +282,12 @@ export function SymbolCard({ symbol, onTap, isParentMode, showEditOverlay }: Pro
     <button
       className={`symbol-card${symbol.hidden ? ' symbol-hidden' : ''}${previewed ? ' symbol-previewed' : ''}${symbol.highlightColor ? ' symbol-highlighted' : ''}`}
       style={cardStyle}
+      type="button"
+      onClick={handleClick}
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerUp}
       aria-label={symbol.isCategory ? `${symbol.label} category` : `Speak ${symbol.phrase}`}
-      role="button"
     >
       {symbol.isCategory && (
         <span className="symbol-card-nav-indicator" aria-hidden="true">▶</span>

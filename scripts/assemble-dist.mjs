@@ -2,7 +2,7 @@
 // Vite outputs the React app to dist/app/. This script adds the
 // landing page, terms, CNAME, icons, and OG image at the dist root.
 
-import { copyFileSync, cpSync, mkdirSync, existsSync } from 'fs';
+import { copyFileSync, cpSync, mkdirSync, existsSync, rmSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -80,6 +80,15 @@ if (existsSync(join(pub, 'screenshots'))) {
 if (existsSync(join(pub, 'symbols'))) {
   cpSync(join(pub, 'symbols'), join(dist, 'symbols'), { recursive: true });
   console.log('✓ dist/symbols/');
+}
+
+// Prune build-only source sprite SHEETS (~31MB of JPGs) from the shipped output.
+// They are inputs to slice-sprites.mjs only — the app references the per-emotion
+// WebP files, never the sheets, and they are not precached.
+const spritesDir = join(dist, 'app', 'characters', 'sprites');
+if (existsSync(spritesDir)) {
+  rmSync(spritesDir, { recursive: true, force: true });
+  console.log('✓ pruned dist/app/characters/sprites (build-only source sheets)');
 }
 
 console.log('\n✅ dist/ assembled: landing at /, React app at /app/');
