@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { useModalA11y } from '../../hooks/useModalA11y';
 import { useBoardStore } from '../../store/boardStore';
 import type { Board } from '../../db';
 
@@ -77,6 +78,8 @@ export function CustomWordModal({ open, onClose, editSymbol, boardId = 'custom' 
     onClose();
   }, [label, phrase, selectedEmoji, photoPreview, editSymbol, addSymbolToBoard, updateCustomSymbol, onClose, targetBoard]);
 
+  const dialogRef = useModalA11y(open, onClose);
+
   if (!open) return null;
 
   // Filter boards for the dropdown — exclude system boards
@@ -86,7 +89,7 @@ export function CustomWordModal({ open, onClose, editSymbol, boardId = 'custom' 
 
   return (
     <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="modal">
+      <div className="modal" ref={dialogRef} role="dialog" aria-modal="true" tabIndex={-1}>
         <h2 className="modal-title">
           {editSymbol ? '✏️ Edit Symbol' : '✨ Add Symbol'}
         </h2>

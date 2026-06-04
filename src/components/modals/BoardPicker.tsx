@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { useModalA11y } from '../../hooks/useModalA11y';
 import { useBoardStore } from '../../store/boardStore';
 import type { Board } from '../../db';
 
@@ -24,11 +25,13 @@ export function BoardPicker({ open, title, currentBoardId, onSelect, onClose }: 
     if (e.target === e.currentTarget) onClose();
   }, [onClose]);
 
+  const dialogRef = useModalA11y(open, onClose);
+
   if (!open) return null;
 
   return (
     <div className="modal-overlay" onClick={handleOverlayClick}>
-      <div className="modal" style={{ maxWidth: 360 }}>
+      <div className="modal" style={{ maxWidth: 360 }} ref={dialogRef} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1}>
         <h2 className="modal-title">{title}</h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: '60dvh', overflowY: 'auto' }}>
           {boards

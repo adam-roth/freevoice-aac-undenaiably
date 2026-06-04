@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useParentStore } from '../../store/parentStore';
+import { useModalA11y } from '../../hooks/useModalA11y';
 
 // Step machine across modes:
 //   unlock: [verify]                       (enter PIN, done)
@@ -91,6 +92,8 @@ export function PinModal() {
     }
   }, [digits, step, pinMode, verifyPin, clearPin, setPin, savedNewPin]);
 
+  const dialogRef = useModalA11y(showPinModal, closePinModal);
+
   if (!showPinModal) return null;
 
   const { title, subtitle } = titles(pinMode, step);
@@ -100,7 +103,7 @@ export function PinModal() {
 
   return (
     <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) closePinModal(); }}>
-      <div className="pin-modal">
+      <div className="pin-modal" ref={dialogRef} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1}>
         <h2 className="pin-title">{title}</h2>
         <p className="pin-subtitle">{subtitle}</p>
 

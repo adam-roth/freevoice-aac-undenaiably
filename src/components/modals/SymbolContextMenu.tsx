@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { useModalA11y } from '../../hooks/useModalA11y';
 
 interface Props {
   open: boolean;
@@ -16,11 +17,13 @@ export function SymbolContextMenu({ open, label, isCategory, onEdit, onMove, onD
     if (e.target === e.currentTarget) onClose();
   }, [onClose]);
 
+  const dialogRef = useModalA11y(open, onClose);
+
   if (!open) return null;
 
   return (
     <div className="modal-overlay" onClick={handleOverlayClick}>
-      <div className="context-menu">
+      <div className="context-menu" ref={dialogRef} role="dialog" aria-modal="true" aria-label={label} tabIndex={-1}>
         <h3 className="context-menu-title">{label}</h3>
         {isCategory && onAddInside && (
           <button className="context-menu-btn edit" onClick={onAddInside}>

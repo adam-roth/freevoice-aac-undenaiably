@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { useModalA11y } from '../../hooks/useModalA11y';
 import { useBoardStore } from '../../store/boardStore';
 import { useSettingsStore } from '../../store/settingsStore';
 import { useTTS } from '../../hooks/useTTS';
@@ -46,11 +47,13 @@ export function SymbolSearch({ open, onClose }: Props) {
     }
   }, [addToken, navigateToBoard, speak, autoSpeak, onClose]);
 
+  const dialogRef = useModalA11y(open, onClose);
+
   if (!open) return null;
 
   return (
     <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="search-modal">
+      <div className="search-modal" ref={dialogRef} role="dialog" aria-modal="true" aria-label="Search symbols" tabIndex={-1}>
         <div className="search-header">
           <input
             ref={inputRef}
