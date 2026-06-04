@@ -61,6 +61,12 @@ export function VoiceSelector() {
 
   const { speak, cancel, isSpeaking } = useTTS();
 
+  // The Kokoro AI voices only run where the page is cross-origin isolated
+  // (the app on phone/tablet). On plain desktop web they're unavailable and the
+  // clear built-in OS voice is used instead — so show guidance, not a forever
+  // "downloading…" spinner.
+  const aiVoicesSupported = typeof self !== 'undefined' ? self.crossOriginIsolated : false;
+
   const handleTestVoice = useCallback(() => {
     cancel();
     speak('I want to go to the park please');
@@ -223,6 +229,15 @@ export function VoiceSelector() {
             {renderRegularSection('British Female', BRITISH_FEMALE)}
             {renderRegularSection('British Male', BRITISH_MALE)}
           </>
+        ) : !aiVoicesSupported ? (
+          <div className="voice-placeholder" style={{ textAlign: 'left', lineHeight: 1.5 }}>
+            <p style={{ margin: '0 0 6px', fontWeight: 700 }}>✨ The natural AI voices run in the FreeVoice app.</p>
+            <p style={{ margin: 0 }}>
+              This web version uses your device&apos;s built‑in voice, which is clear but more robotic.
+              For the premium AI voices, use FreeVoice on a <strong>phone or tablet</strong> — that&apos;s
+              where they run best. You can still adjust speed, pitch, and volume below.
+            </p>
+          </div>
         ) : (
           <p className="voice-placeholder">
             Downloading AI voice model…
