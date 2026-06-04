@@ -432,6 +432,18 @@ export function useTTS() {
     // Only proceed if Kokoro is idle
     if (kokoroStatus !== 'idle') return;
 
+    // Kokoro's on-device model is only usable where SharedArrayBuffer (cross-
+    // origin isolation) is available: the Android TWA sets COOP/COEP so it's
+    // isolated and Kokoro runs fast + clean there. Plain desktop web (GitHub
+    // Pages) is NOT isolated — the single-threaded WASM is too slow to be usable
+    // and the WebGPU path produced muffled audio. In non-isolated contexts skip
+    // Kokoro and use the clear OS Web Speech voice instead (no muffle, no
+    // silence, no ~100MB model download).
+    if (typeof self !== 'undefined' && !self.crossOriginIsolated) {
+      useTTSStore.getState().setActiveTier('webspeech');
+      return;
+    }
+
     // Reset kokoroDeclined flag — old app version set this, but now we auto-download unconditionally
     if (kokoroDeclined) {
       useTTSStore.getState().setKokoroDeclined(false);
