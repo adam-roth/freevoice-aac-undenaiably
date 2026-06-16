@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSettingsStore, type LabelPosition, type ColorScheme, type SkinTone } from '../store/settingsStore';
+import { useSettingsStore, type LabelPosition, /* Disabled: type ColorScheme,*/ type SkinTone } from '../store/settingsStore';
 import { useParentStore } from '../store/parentStore';
 import { useBoardStore } from '../store/boardStore';
 import { useFirstThenStore } from '../store/firstThenStore';
@@ -13,7 +13,7 @@ import { CustomContentManager } from '../components/settings/CustomContentManage
 import { db } from '../db';
 import { exportProfile, importProfile, mergeImport, shareBoardAsUrl } from '../utils/backup';
 import { SUPPORTED_LANGUAGES, LANGUAGE_NAMES, LANGUAGE_FLAGS, SPRINT_2_LANGUAGES } from '../i18n/index';
-import { TOUCH_DELAY_STEPS, formatTouchDelay } from '../hooks/useTouchDelay';
+// Disabled: import { TOUCH_DELAY_STEPS, formatTouchDelay } from '../hooks/useTouchDelay';
 
 const SKIN_TONES: { value: SkinTone; label: string; swatch: string }[] = [
   { value: 'default', label: 'Default', swatch: '👋' },
@@ -364,7 +364,7 @@ export function Settings({ onBack }: { onBack: () => void }) {
               ))}
             </div>
           </div>
-          <div className="settings-row">
+          {/* Disabled: <div className="settings-row">
             <label>Card Style</label>
             <div className="settings-btn-group">
               {([{ value: 'colors', label: 'Colors' }, { value: 'pastel', label: 'Pastel' }, { value: 'high-contrast', label: 'High Contrast' }] as const).map((s) => (
@@ -373,7 +373,7 @@ export function Settings({ onBack }: { onBack: () => void }) {
                 </button>
               ))}
             </div>
-          </div>
+          </div> */}
           <div className="settings-row">
             <label>Label Position</label>
             <div className="settings-btn-group">
@@ -384,7 +384,7 @@ export function Settings({ onBack }: { onBack: () => void }) {
               ))}
             </div>
           </div>
-          <div className="settings-row">
+          {/* Disabled: <div className="settings-row">
             <label>Color Scheme</label>
             <div className="settings-btn-group">
               {([{ value: 'default', label: 'Default' }, { value: 'fitzgerald', label: 'Fitzgerald Key' }] as const).map((s) => (
@@ -393,7 +393,7 @@ export function Settings({ onBack }: { onBack: () => void }) {
                 </button>
               ))}
             </div>
-          </div>
+          </div> */}
           <div className="settings-row">
             <label>Skin Tone</label>
             <div className="settings-btn-group">
@@ -418,7 +418,7 @@ export function Settings({ onBack }: { onBack: () => void }) {
           </div>
         </section>
 
-        {/* ── ACCESSIBILITY ── */}
+        {/* Disabled: ── ACCESSIBILITY ── 
         <section className="settings-section">
           <h2 className="settings-section-title">Accessibility</h2>
           <div className="settings-row">
@@ -446,7 +446,7 @@ export function Settings({ onBack }: { onBack: () => void }) {
             />
           </div>
           <p className="settings-hint">Press and hold every button for the selected duration before it activates. Helps slow down rapid tapping.</p>
-        </section>
+        </section> */}
 
         {/* ── BOARD MANAGEMENT ── */}
         <section className="settings-section">
