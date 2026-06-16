@@ -8,13 +8,14 @@ import { SymbolGrid } from '../components/SymbolGrid/SymbolGrid';
 import { TabBar } from '../components/TabBar/TabBar';
 import { FastPhrasesStrip } from '../components/FastPhrasesStrip/FastPhrasesStrip';
 import { CoreWordsBar } from '../components/CoreWordsBar/CoreWordsBar';
-import { IosInstallPrompt } from '../components/modals/IosInstallPrompt';
-import { AndroidInstallPrompt } from '../components/modals/AndroidInstallPrompt';
 import { SymbolSearch } from '../components/modals/SymbolSearch';
 import { OnboardingWizard } from '../components/modals/OnboardingWizard';
-import { UpdatePrompt } from '../components/UpdatePrompt/UpdatePrompt';
 import { useArasaac } from '../hooks/useArasaac';
 import { importBoardFromUrl } from '../utils/backup';
+
+/*import { IosInstallPrompt } from '../components/modals/IosInstallPrompt';
+import { AndroidInstallPrompt } from '../components/modals/AndroidInstallPrompt';
+import { UpdatePrompt } from '../components/UpdatePrompt/UpdatePrompt';*/
 
 interface Props {
   onOpenParentMode: () => void;
@@ -100,15 +101,15 @@ export function Board({ onOpenParentMode, onOpenProfile }: Props) {
     <>
       <SpeechBar onOpenSettings={onOpenParentMode} onOpenSearch={() => setSearchOpen(true)} onOpenProfile={onOpenProfile} />
       <div className="parent-tap-zone" onClick={handleTripleTap} aria-hidden="true" />
-      <IosInstallPrompt />
-      <AndroidInstallPrompt />
+{/* Disabled:      <IosInstallPrompt />  */}
+{/* Disabled:       <AndroidInstallPrompt />  */}
       <FastPhrasesStrip />
-      <BreadcrumbNav />
       <CoreWordsBar />
+	<BreadcrumbNav />
       <SymbolGrid />
       <TabBar isParentMode={currentBoardId === 'custom'} />
       <SymbolSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
-      <UpdatePrompt />
+{/* Disabled:       <UpdatePrompt />  */}
     </>
   );
 }

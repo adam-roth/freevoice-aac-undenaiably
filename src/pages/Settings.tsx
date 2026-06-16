@@ -6,7 +6,7 @@ import { useBoardStore } from '../store/boardStore';
 import { useFirstThenStore } from '../store/firstThenStore';
 import { useCharacterStore } from '../store/characterStore';
 import { useEditModeStore } from '../store/editModeStore';
-import { VoiceSelector } from '../components/VoiceSelector/VoiceSelector';
+// Disabled: import { VoiceSelector } from '../components/VoiceSelector/VoiceSelector';
 import { CharacterPicker } from '../components/CharacterPicker/CharacterPicker';
 import { Avatar } from '../components/Avatar/Avatar';
 import { CustomContentManager } from '../components/settings/CustomContentManager';
@@ -230,7 +230,7 @@ export function Settings({ onBack }: { onBack: () => void }) {
       <div className="settings-scroll">
 
         {/* ── VOICE (3-tier system) ── */}
-        <VoiceSelector />
+        {/* Disabled: <VoiceSelector /> */}
 
         {/* ── YOUR CHARACTER ── */}
         <section className="settings-section">
