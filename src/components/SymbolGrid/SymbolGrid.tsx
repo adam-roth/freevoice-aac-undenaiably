@@ -118,16 +118,17 @@ export function SymbolGrid({ isParentMode }: Props) {
   // category tiles live. Other boards keep the single Add Button card.
   const showCreateBoardCard = isHomeBoard && !isParentMode;
 
+  const pendingTap = useRef<NodeJS.Timeout | null>(null); // fixing tap/scroll bug
   const handleTap = useCallback(
-    (symbol: DbSymbol) => {
-      if (longPressTriggered.current || isScrolling.current) {
-        longPressTriggered.current = false;
-        isScrolling.current = false;
-        return;
-      }
-      // Edit Mode wins before highlight, speech, and navigation. Tapping
-      // any button (built-in or custom) opens its edit form. Categories
-      // skip — they still navigate so users can enter sub-boards to edit.
+  (symbol: DbSymbol) => {
+    // 1. DO NOT reset isScrolling here anymore!
+    if (longPressTriggered.current || isScrolling.current) {
+      longPressTriggered.current = false;
+      return;
+    }
+
+    // 2. Wrap the execution. If handleTouchMove fires within 120ms, this gets cancelled.
+    pendingTap.current = setTimeout(() => {
       if (editMode && !symbol.isCategory) {
         openButtonEditor(symbol);
         return;
@@ -137,7 +138,6 @@ export function SymbolGrid({ isParentMode }: Props) {
         setSymbolHighlight(symbol.id, nextColor);
         return;
       }
-      // First/Then mode — fill the active slot; navigation tiles still navigate
       if (firstThenMode && !symbol.isCategory) {
         const { bothFilled } = fillFirstThen({
           emoji: symbol.emoji,
@@ -156,10 +156,6 @@ export function SymbolGrid({ isParentMode }: Props) {
       if (symbol.isCategory && symbol.targetBoardId) {
         navigateToBoard(symbol.targetBoardId, symbol.label, symbol.emoji);
       } else {
-        // Fire speech FIRST so it kicks off before any state updates trigger
-        // re-renders. `speak` is async but its synchronous prelude (voice
-        // lookup, utterance creation, synth.speak) runs immediately.
-        // Custom user recording wins over TTS when present.
         if (autoSpeak) {
           if (symbol.audioBlob) {
             playRecording(symbol.audioBlob, symbol.audioMime);
@@ -169,9 +165,10 @@ export function SymbolGrid({ isParentMode }: Props) {
         }
         addToken(symbol.emoji, symbol.phrase);
       }
-    },
-    [navigateToBoard, addToken, speak, playRecording, autoSpeak, highlightMode, highlightColor, setSymbolHighlight, firstThenMode, fillFirstThen, editMode, openButtonEditor],
-  );
+    }, 120); // The Magic Cancellation Window
+  },
+  [navigateToBoard, addToken, speak, playRecording, autoSpeak, highlightMode, highlightColor, setSymbolHighlight, firstThenMode, fillFirstThen, editMode, openButtonEditor]
+);
 
   const handleLongPressStart = useCallback((symbol: DbSymbol, e?: React.TouchEvent | React.MouseEvent) => {
     isScrolling.current = false;
@@ -213,6 +210,12 @@ export function SymbolGrid({ isParentMode }: Props) {
       clearTimeout(editLongPressTimer.current);
       editLongPressTimer.current = null;
     }
+    // Clear the scrolling flag 10ms AFTER the touch ends. 
+    // This ensures if a tap event fires synchronously, it still sees isScrolling as true,
+    // but prevents it from getting stuck forever.
+    setTimeout(() => {
+      isScrolling.current = false;
+    }, 10);
     setLongPressingId(null);
   }, []);
 
@@ -222,6 +225,13 @@ export function SymbolGrid({ isParentMode }: Props) {
     // If touch moved more than 10px, consider it a scroll
     if (delta > 10) {
       isScrolling.current = true;
+
+      // Fix tap/scroll bug; cancel the tap, the user is scrolling.
+      if (pendingTap.current) {
+        clearTimeout(pendingTap.current);
+        pendingTap.current = null;
+      }
+
       handleLongPressEnd();
     }
   }, [handleLongPressEnd]);
