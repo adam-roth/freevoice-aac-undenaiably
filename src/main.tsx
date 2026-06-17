@@ -41,7 +41,9 @@ function setupAndroidBridge() {
 		if (utterance.onend) utterance.onend(new Event('end'));
 	    }
           },
-          cancel: function() {},
+          cancel: function() {
+		if (win.AndroidBridge && win.AndroidBridge.stop) { win.AndroidBridge.stop(); if (win._activeSpeechCallback) win._activeSpeechCallback(new Event('end')); win._activeSpeechCallback = null; }
+	  },
           pause: function() {},
           resume: function() {},
           getVoices: function() {
@@ -59,35 +61,6 @@ function setupAndroidBridge() {
           }
       };
   }
-
-  // HACK: force empty speech to fix issue where first tap produces no speech
-  // (ineffective; issue appears to be triggered by navigating/changing categories in freevoice itself)
-  // (looks like FreeVoice is attempting to avoid speech on scroll operations by ignoring the 'next' speech operation; unfortunately this is failing as the tap to scroll still triggers the speech, and then it ignore the first tap that occurs *after* the scroll event has completed) 
-  /*setTimeout(function() {
-    if (window.AndroidBridge && window.AndroidBridge.speak) {
-      window.AndroidBridge.speak(" ")
-    }
-  }, 1000)*/
-
-  // 3. Auto-Configure the Child's Name
-  // FIXME:  implement
-  /*try {
-      const params = new URLSearchParams(window.location.search);
-      const defaultName = params.get('defaultName');
-
-      if (defaultName) {
-          // TODO: You must verify the exact localStorage key FreeVoice uses!
-          // If they use a state manager like Zustand, it might be stored as a JSON string.
-          // e.g., localStorage.setItem('freevoice-storage', JSON.stringify({ state: { name: defaultName } }))
-
-          const storageKey = 'userName'; // CHANGE THIS TO THE REAL KEY
-          if (!localStorage.getItem(storageKey)) {
-              localStorage.setItem(storageKey, defaultName);
-          }
-      }
-  } catch (e) {
-      console.error("Bridge Init Error", e);
-  }*/
 }
 
 // Execute the rig BEFORE React mounts
