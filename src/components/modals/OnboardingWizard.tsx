@@ -8,8 +8,18 @@ interface Props {
 }
 
 export function OnboardingWizard({ onComplete }: Props) {
-  const [step, setStep] = useState(0);
-  const [name, setName] = useState('');
+  // 1. Pull the name from the URL if it exists
+  const [name, setName] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('defaultName') || '';
+  });
+
+  // 2. If we found a name, skip Step 0 and go straight to the Avatar Picker (Step 1)
+  const [step, setStep] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('defaultName') ? 1 : 0;
+  });
+
   const setOnboardingDone = useSettingsStore((s) => s.setOnboardingDone);
   const selectedCharacterId = useCharacterStore((s) => s.selectedCharacterId);
   const characters = useCharacterStore((s) => s.characters);
