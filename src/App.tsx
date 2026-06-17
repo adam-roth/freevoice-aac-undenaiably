@@ -7,7 +7,7 @@ import { useSettingsStore } from './store/settingsStore';
 import { useUserProfileStore } from './store/userProfileStore';
 import { useSymbolOverridesStore } from './store/symbolOverridesStore';
 import { useCharacterManifest } from './hooks/useCharacterManifest';
-import { GreetingToast } from './components/GreetingToast/GreetingToast';
+// Disabled: import { GreetingToast } from './components/GreetingToast/GreetingToast';
 import { EditModeBanner } from './components/EditModeBanner/EditModeBanner';
 import { RTL_LANGUAGES, CJK_LANGUAGES, type SupportedLanguage } from './i18n/index';
 
@@ -65,7 +65,7 @@ function App() {
         onOpenParentMode={() => setPage('parent')}
         onOpenProfile={() => setPage('profile')}
       />
-      <GreetingToast />
+      {/* Disabled: <GreetingToast /> */}
       <EditModeBanner />
     </>
   );
